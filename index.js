@@ -1,7 +1,9 @@
 const express = require('express');
 const Router = require('./src/routes/router');
 const app = express();
+var cors = require('cors')
 
+app.use(cors())
 app.use(express.json());
 app.use('/app', Router);
 
@@ -12,5 +14,5 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT
 
 app.listen(PORT, () => {
-  console.log("server listening on port 8000")
+  console.log(`server listening on port ${PORT}`)
 });
