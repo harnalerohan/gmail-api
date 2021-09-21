@@ -9,6 +9,8 @@ app.get('/', (req, res) => {
   res.send("Welcome to gmail api app")
 })
 
-app.listen(8000, () => {
+const PORT = process.env.PORT
+
+app.listen(PORT, () => {
   console.log("server listening on port 8000")
 });
