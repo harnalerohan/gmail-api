@@ -26,8 +26,8 @@ const sendMail = async (req, res) => {
     });
 
     const mailOptions = {
-      from: `${req.body.email}`,
-      to: process.env.TO,
+      from: `${req.body.name}`,
+      to: req.body.to ? req.body.to : process.env.TO,
       subject: req.body.subject,
       text: req.body.message
     }
