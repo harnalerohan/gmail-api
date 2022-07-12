@@ -1,55 +1,59 @@
 require('dotenv').config();
 const {google} = require('googleapis');
-const nodemailer = require('nodemailer');
+const MailComposer = require('nodemailer/lib/mail-composer');
 
-const sendMail = async (req, res) => {
-  const client_secret = process.env.SECRET
-  const client_id = process.env.ID
-  const redirect_uris = process.env.URIS
-  const refresh_token = process.env.TOKEN
-
-  const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris);
-  oAuth2Client.setCredentials({refresh_token: refresh_token});
-  
-  try{
-    const access_token = oAuth2Client.getAccessToken();
-    const transport = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        type: 'OAUTH2',
-        user: process.env.USER,
-        clientId: process.env.ID,
-        clientSecret: process.env.SECRET,
-        refreshToken: refresh_token,
-        accessToken: access_token
-      }
-    });
-
-    const mailOptions = {
-      from: `${req.body.name}`,
-      to: req.body.to ? req.body.to : process.env.TO,
-      subject: req.body.subject,
-      text: req.body.message
-    }
-    const result = await transport.sendMail(mailOptions);
-    if(result.accepted.length > 0){
-      res.status(200).json({
-        status: "success",
-        message: "email is sent succesfully."
-      });
-    }else{
-      res.status(400).json({
-        status: "failed",
-        messgae: "failed to send email."
-      })
-    }
-  }catch(e){
-    console.log("error", e)
-    res.status(400).json({
-      status: "failed",
-      message: e
-    })
-  }
+const sendEmail = async (req, res) => {
+  main(req.body)
+  .then((messageId) => res.json({message: 'Message sent successfully:', messageId: messageId}))
+  .catch((err) => console.error(err));
 }
 
-module.exports = sendMail;
+const main = async (body) => {
+  const options = {
+    to: body.to,
+    replyTo: body.to,
+    subject: body.subject,
+    text: body.message,
+    textEncoding: 'base64',
+    headers: [
+      { key: 'X-Application-Developer', value: 'Rohan Harnale' },
+      { key: 'X-Application-Version', value: 'v1.0.0.2' },
+    ],
+  };
+
+  const messageId = await sendMail(options);
+  return messageId;
+};
+
+const sendMail = async (options) => {
+  const gmail = getGmailService();
+  const rawMessage = await createMail(options);
+  const { data: { id } = {} } = await gmail.users.messages.send({
+    userId: 'me',
+    resource: {
+      raw: rawMessage,
+    },
+  });
+  return id;
+};
+
+const getGmailService = () => {
+  const oAuth2Client = new google.auth.OAuth2(process.env.ID, process.env.SECRET);
+  oAuth2Client.setCredentials({ refresh_token: process.env.RTOKEN });
+  const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
+  return gmail;
+};
+
+const encodeMessage = (message) => {
+  return Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
+
+const createMail = async (options) => {
+  const mailComposer = new MailComposer(options);
+  const message = await mailComposer.compile().build();
+  return encodeMessage(message);
+};
+
+module.exports = {
+  sendEmail
+};
