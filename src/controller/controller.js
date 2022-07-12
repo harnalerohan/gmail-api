@@ -10,8 +10,8 @@ const sendEmail = async (req, res) => {
 
 const main = async (body) => {
   const options = {
-    to: body.to,
-    replyTo: body.to,
+    to: 'ronh7707@gmail.com',
+    replyTo: 'ronh7707@gmail.com',
     subject: body.subject,
     text: body.message,
     textEncoding: 'base64',
