@@ -28,7 +28,7 @@ const main = async (body) => {
 const sendMail = async (options) => {
   const gmail = getGmailService();
   const rawMessage = await createMail(options);
-  const { data: { id } = {} } = await gmail.users.messages.send({
+  const { data: { id } = {} } = gmail.users.messages.send({
     userId: 'me',
     resource: {
       raw: rawMessage,
